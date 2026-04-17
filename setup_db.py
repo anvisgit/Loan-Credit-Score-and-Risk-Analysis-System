@@ -1,15 +1,11 @@
-timport os, sys, psycopg2
+import os, sys, psycopg2
+from getpass import getpass
+from dotenv import set_key
 
-DB_CONFIG = {
-    "host":     os.getenv("DB_HOST",     "localhost"),
-    "port":     int(os.getenv("DB_PORT", "5432")),
-    "dbname":   os.getenv("DB_NAME",     "loandb"),
-    "user":     os.getenv("DB_USER",     "postgres"),
-    "password": os.getenv("DB_PASSWORD", "postgres"),
-}
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 SCHEMA_SQL = os.path.join(BASE_DIR, "db", "schema.sql")
 SEED_SQL   = os.path.join(BASE_DIR, "db", "seed.sql")
+ENV_PATH   = os.path.join(BASE_DIR, ".env")
 
 def run_file(conn, path):
     with open(path, "r", encoding="utf-8") as f:
@@ -18,16 +14,36 @@ def run_file(conn, path):
     print(f"  OK  {os.path.basename(path)}")
 
 def main():
-    print("\nLoanIQ — Database Setup\n")
+    print("\nLoanIQ — Interactive Database Setup\n")
+    print("Please provide your PostgreSQL credentials (they will be saved to .env).")
+    
+    host     = input("Host [localhost]: ").strip() or "localhost"
+    port     = input("Port [5432]: ").strip() or "5432"
+    dbname   = input("Database Name [loandb]: ").strip() or "loandb"
+    user     = input("User [postgres]: ").strip() or "postgres"
+    password = getpass("Password: ").strip()
+
+    print(f"\nConnecting to {host}:{port}/{dbname} as {user}...")
+
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
+        conn = psycopg2.connect(
+            host=host, port=int(port), dbname=dbname, user=user, password=password
+        )
     except psycopg2.OperationalError as e:
-        print(f"[ERROR] Cannot connect: {e}\n"
-              "  1. Start PostgreSQL\n"
-              "  2. CREATE DATABASE loandb;\n"
-              "  3. Set DB_USER / DB_PASSWORD env vars if non-default")
+        print(f"\n[ERROR] Connection failed: {e}")
         sys.exit(1)
 
+    print("Success! Connection established.")
+    
+    # Save to .env
+    set_key(ENV_PATH, "DB_HOST", host)
+    set_key(ENV_PATH, "DB_PORT", port)
+    set_key(ENV_PATH, "DB_NAME", dbname)
+    set_key(ENV_PATH, "DB_USER", user)
+    set_key(ENV_PATH, "DB_PASSWORD", password)
+    print("Credentials saved to .env file.")
+
+    print("\nRunning SQL scripts...")
     run_file(conn, SCHEMA_SQL)
     run_file(conn, SEED_SQL)
 

@@ -46,7 +46,6 @@ with st.sidebar:
 - Customer Management
 - Loan Application
 - EMI Tracker
-- Risk Dashboard
 - Administration
 """)
     st.markdown("---")
@@ -57,9 +56,28 @@ st.caption("Portfolio overview — real-time data from PostgreSQL")
 
 try:
     kpis = get_kpis()
+except ValueError as e:
+    st.error(f"Database Configuration Missing: {e}")
+    st.info("Please provide your PostgreSQL credentials below to connect.")
+    from dotenv import set_key
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    with st.form("db_config_form"):
+        host = st.text_input("Host", value=os.getenv("DB_HOST", "localhost"))
+        port = st.text_input("Port", value=os.getenv("DB_PORT", "5432"))
+        dbname = st.text_input("Database Name", value=os.getenv("DB_NAME", "loandb"))
+        user = st.text_input("User Name", value=os.getenv("DB_USER", "postgres"))
+        pwd = st.text_input("Password", type="password")
+        if st.form_submit_button("Save Credentials & Connect", use_container_width=True):
+            set_key(env_path, "DB_HOST", host.strip() or "localhost")
+            set_key(env_path, "DB_PORT", port.strip() or "5432")
+            set_key(env_path, "DB_NAME", dbname.strip() or "loandb")
+            set_key(env_path, "DB_USER", user.strip() or "postgres")
+            set_key(env_path, "DB_PASSWORD", pwd.strip())
+            st.rerun()
+    st.stop()
 except Exception as e:
     st.error(f"Database connection failed: {e}")
-    st.info("Ensure PostgreSQL is running and run `python setup_db.py` to initialize the database.")
+    st.info("Ensure PostgreSQL is running and the credentials in .env are correct.")
     st.stop()
 
 c1, c2, c3, c4 = st.columns(4)

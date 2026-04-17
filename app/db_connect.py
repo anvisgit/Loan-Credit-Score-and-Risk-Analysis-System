@@ -3,17 +3,22 @@ import psycopg2
 import pandas as pd
 from datetime import date
 
-DB_CONFIG = {
-    "host":     os.getenv("DB_HOST",     "localhost"),
-    "port":     int(os.getenv("DB_PORT", "5432")),
-    "dbname":   os.getenv("DB_NAME",     "loandb"),
-    "user":     os.getenv("DB_USER",     "postgres"),
-    "password": os.getenv("DB_PASSWORD", "postgres"),
-}
-
+from dotenv import load_dotenv
 
 def get_connection():
-    return psycopg2.connect(**DB_CONFIG)
+    load_dotenv(override=True)
+    host   = os.getenv("DB_HOST", "")
+    port   = os.getenv("DB_PORT", "")
+    dbname = os.getenv("DB_NAME", "")
+    user   = os.getenv("DB_USER", "")
+    pwd    = os.getenv("DB_PASSWORD", "")
+    
+    if not all([host, port, dbname, user, pwd]):
+        raise ValueError("Database credentials are not fully configured.")
+        
+    return psycopg2.connect(
+        host=host, port=int(port), dbname=dbname, user=user, password=pwd
+    )
 
 
 def fetch_df(sql, params=None):
