@@ -1,8 +1,6 @@
--- ============================================================
---  queries.sql — 10 Analytical Queries
--- ============================================================
 
--- ─── Q1: Top Defaulters (JOINs + ORDER BY) ───────────────────
+
+--  Top Defaulters (JOINs + ORDER BY) 
 -- Shows customers with most defaults, their overdue days, and penalty totals
 SELECT
     c.customer_id,
@@ -26,7 +24,7 @@ LEFT JOIN LATERAL (
 GROUP BY c.customer_id, c.name, c.phone, cs.score_value
 ORDER BY total_defaults DESC, total_overdue_days DESC;
 
--- ─── Q2: Monthly EMI Collections ─────────────────────────────
+-- Monthly EMI Collections 
 -- Total repayments grouped by month
 SELECT
     TO_CHAR(r.payment_date, 'YYYY-MM')  AS collection_month,
@@ -39,8 +37,7 @@ FROM repayment r
 GROUP BY collection_month
 ORDER BY collection_month;
 
--- ─── Q3: Credit Score Trend Per Customer (Window Function) ───
--- Running average of credit score over time using window function
+-- Running average of credit score over time 
 SELECT
     c.name,
     cs.score_date,
@@ -59,7 +56,7 @@ JOIN customer c      ON c.customer_id = cs.customer_id
 JOIN risk_category r ON r.risk_id     = cs.risk_id
 ORDER BY c.customer_id, cs.score_date;
 
--- ─── Q4: Loan Approval Rate by Loan Type ─────────────────────
+-- : Loan Approval Rate by Loan Type 
 SELECT
     lt.type_name,
     COUNT(l.loan_id)                                             AS total_loans,
@@ -77,7 +74,7 @@ LEFT JOIN loan l ON l.loan_type_id = lt.loan_type_id
 GROUP BY lt.loan_type_id, lt.type_name
 ORDER BY total_disbursed DESC;
 
--- ─── Q5: Customers Eligible for New Loan ─────────────────────
+--  Customers Eligible for New Loan 
 -- Score > 600, no active defaults, income > 30000
 SELECT
     c.customer_id,
@@ -108,7 +105,7 @@ GROUP BY
     cs_latest.score_value, rc.risk_level, ch.total_defaults
 ORDER BY cs_latest.score_value DESC;
 
--- ─── Q6: Loan Portfolio Risk Distribution ────────────────────
+-- Loan Portfolio Risk Distribution 
 SELECT
     rc.risk_level,
     COUNT(DISTINCT c.customer_id)  AS customer_count,
@@ -126,7 +123,7 @@ LEFT JOIN loan l ON l.customer_id = c.customer_id
 GROUP BY rc.risk_level
 ORDER BY rc.risk_level;
 
--- ─── Q7: EMI Status Summary per Loan ─────────────────────────
+--  EMI Status Summary per Loan 
 SELECT
     l.loan_id,
     c.name            AS customer_name,
@@ -147,7 +144,7 @@ LEFT JOIN emi_schedule e ON e.loan_id = l.loan_id
 GROUP BY l.loan_id, c.name, lt.type_name, l.loan_amount
 ORDER BY repayment_pct ASC NULLS LAST;
 
--- ─── Q8: Penalty Leaderboard with Rank (Window Function) ─────
+--  Penalty Leaderboard with Rank (Window Function) 
 SELECT
     c.customer_id,
     c.name,
@@ -162,7 +159,7 @@ JOIN penalty p         ON p.default_id  = dr.default_id
 GROUP BY c.customer_id, c.name
 ORDER BY penalty_rank;
 
--- ─── Q9: Income vs Loan Capacity Analysis ────────────────────
+-- Income vs Loan Capacity Analysis 
 SELECT
     c.customer_id,
     c.name,
@@ -179,7 +176,7 @@ LEFT JOIN emi_schedule e ON e.loan_id = l.loan_id
 GROUP BY c.customer_id, c.name, i.monthly_income, i.employment_type
 ORDER BY loan_to_income_ratio DESC NULLS LAST;
 
--- ─── Q10: Cumulative Repayment vs Outstanding (Window Function)
+-- Cumulative Repayment vs Outstanding (Window Function)
 SELECT
     c.name,
     TO_CHAR(r.payment_date, 'YYYY-MM') AS month,

@@ -10,8 +10,6 @@ import pandas as pd
 from datetime import date, timedelta
 from typing import Optional
 
-# ── Connection Config ──────────────────────────────────────────
-# Edit these or set as environment variables
 DB_CONFIG = {
     "host":     os.getenv("DB_HOST",     "localhost"),
     "port":     int(os.getenv("DB_PORT", "5432")),
@@ -50,9 +48,8 @@ def execute(sql: str, params=None):
         conn.close()
 
 
-# ══════════════════════════════════════════════════════════════
 #  CUSTOMER
-# ══════════════════════════════════════════════════════════════
+
 
 def get_all_customers() -> pd.DataFrame:
     return fetch_df("""
@@ -143,9 +140,7 @@ def delete_customer(customer_id):
     execute("DELETE FROM customer WHERE customer_id=%s", (customer_id,))
 
 
-# ══════════════════════════════════════════════════════════════
 #  CREDIT SCORE
-# ══════════════════════════════════════════════════════════════
 
 def insert_credit_score(customer_id: int, score_value: int):
     """Insert a new credit score record."""
@@ -169,9 +164,7 @@ def insert_credit_score(customer_id: int, score_value: int):
         conn.close()
 
 
-# ══════════════════════════════════════════════════════════════
 #  LOAN TYPES
-# ══════════════════════════════════════════════════════════════
 
 def get_loan_types() -> pd.DataFrame:
     return fetch_df("SELECT * FROM loan_type ORDER BY loan_type_id")
@@ -196,9 +189,7 @@ def delete_loan_type(loan_type_id):
     execute("DELETE FROM loan_type WHERE loan_type_id=%s", (loan_type_id,))
 
 
-# ══════════════════════════════════════════════════════════════
 #  RISK CATEGORIES
-# ══════════════════════════════════════════════════════════════
 
 def get_risk_categories() -> pd.DataFrame:
     return fetch_df("SELECT * FROM risk_category ORDER BY min_score DESC")
@@ -319,9 +310,7 @@ def update_loan_status(loan_id: int, status: str):
     """, (loan_id, status))
 
 
-# ══════════════════════════════════════════════════════════════
 #  EMI SCHEDULE
-# ══════════════════════════════════════════════════════════════
 
 def get_emi_schedule(loan_id: int) -> pd.DataFrame:
     return fetch_df("""
@@ -402,10 +391,6 @@ def auto_default_overdue(loan_id: int):
     update_loan_status(loan_id, "Defaulted")
 
 
-# ══════════════════════════════════════════════════════════════
-#  DASHBOARD KPIs
-# ══════════════════════════════════════════════════════════════
-
 def get_kpis() -> dict:
     df_customers = fetch_df("SELECT COUNT(*) AS cnt FROM customer")
     df_loans     = fetch_df("SELECT COUNT(*) AS cnt FROM loan WHERE current_status='Active'")
@@ -467,9 +452,6 @@ def get_defaulters_table() -> pd.DataFrame:
     """)
 
 
-# ══════════════════════════════════════════════════════════════
-#  ADMIN — RAW SQL RUNNER
-# ══════════════════════════════════════════════════════════════
 
 def run_raw_sql(sql: str):
     """Execute arbitrary SQL and return DataFrame if SELECT, else None."""
@@ -481,9 +463,6 @@ def run_raw_sql(sql: str):
         return None
 
 
-# ══════════════════════════════════════════════════════════════
-#  EXPORT
-# ══════════════════════════════════════════════════════════════
 
 def export_table_csv(table_name: str) -> pd.DataFrame:
     allowed = {
